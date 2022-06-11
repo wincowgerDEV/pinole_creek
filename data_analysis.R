@@ -249,6 +249,7 @@ counts_and_volumes <- read.csv("counts_and_volumes.csv")
 distances_added <- read.csv("distances_to_bay_added.csv") %>%
   inner_join(counts_and_volumes) %>%
   mutate(distance_to_bay = 17732.882 - dist) %>%
+  mutate(multiple = OpenSpecy::make_rel(sum_per_m, na.rm = T) * OpenSpecy::make_rel(sum_m3_per_m, na.rm = T)) %>%
   mutate(censored_sum = sum == 0) %>%
   mutate(censored_volume = sum_m3 == 0) %>%
   mutate(upstream_of_city = distance_to_bay > 6441 + 171)
@@ -302,12 +303,22 @@ ggplot() +
   facet_wrap(. ~ name)
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
+ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) + 
+    geom_point(size = 3) + 
+    geom_line() + 
+    scale_y_log10() + 
+    geom_vline(xintercept = 6441 + 171) + 
+    theme_gray_etal() + 
+    labs(x = "Distance to Bay (m)", y = "Count per m")
+
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m)) + 
   geom_point(size = 3) + 
   geom_line() + 
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
-  theme_gray_etal()
+  theme_gray_etal() + 
+  labs(x = "Distance to Bay (m)", y = "Count per m")
+
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m)) + 
@@ -315,7 +326,8 @@ ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m)) +
   geom_line() + 
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
-  theme_gray_etal()
+  theme_gray_etal() + 
+  labs(x = "Distance to Bay (m)", y = "Volume (m3) per m")
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 #stations pre rain
@@ -374,7 +386,21 @@ ggplot(boot_rain, aes(x = mean_vol_m, y = pre_rain)) +
 
 
 #estimate total amount of litter in the stream
+
+ggplot(distances_added) + 
+    stat_ecdf(aes(x = sum_per_m)) + 
+    theme_gray_etal() + 
+    labs(x = "Count per Meter", y = "Proportion Smaller")
+
+ggplot(distances_added) + 
+    stat_ecdf(aes(x = sum_m3_per_m * 1000)) + 
+    theme_gray_etal() + 
+    labs(x = "Liters per Meter", y = "Proportion Smaller")
+
+hist(distances_added$sum_per_m)
 hist(BootMean(distances_added$sum_per_m))
+mean(distances_added$sum_per_m)
+quantile(BootMean(distances_added$sum_per_m), c(0.025, 0.975)) 
 total_count <- mean(distances_added$sum_per_m) * 17732.882
 count_range <- quantile(BootMean(distances_added$sum_per_m), c(0.025, 0.975)) * 17732.882
 quantile(BootMean(distances_added$sum), c(0.025, 0.975)) 
@@ -383,6 +409,8 @@ mean(distances_added$sum)#2X above average compared to southern California in 20
 hist(BootMean(distances_added$sum_m3_per_m))
 total_volume <- mean(distances_added$sum_m3_per_m) * 17732.882
 volume_range <- quantile(BootMean(distances_added$sum_m3_per_m), c(0.025, 0.975)) * 17732.882
+total_volume/17732.882
+volume_range/17732.882
 #average commercial dump truck is 10 cubic meters. So anywhere from 1-6 dump trucks. 
 #people create 5 pounds of trash per day. 
 #https://www.epa.gov/sites/default/files/2016-04/documents/volume_to_weight_conversion_factors_memorandum_04192016_508fnl.pdf
@@ -428,7 +456,7 @@ trash_items <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = count/sum(count)) %>%
   ungroup() %>%
-  left_join(distances_added_2)
+  left_join(distances_added)
 
 ggplot(trash_items, aes(y=proportion, x=distance_to_bay)) +
   geom_point() + 
@@ -474,7 +502,7 @@ trash_items %>%
     facet_grid(rows = vars(item)) + 
     geom_vline(xintercept = 6441 + 171) + 
     scale_y_log10(limits = c(0.1,100)) + 
-    theme_gray_etal(base_size = 11) + 
+    theme_gray_etal(base_size = 10) + 
     labs(x = "Distance to Bay (m)", y = "Percent") 
 #Might need to remove the sites that had no trash because they will just down weight all the values. 
 trash_list <- expand.grid(item = unique(clean_joined_file_2$item),
@@ -514,7 +542,7 @@ trash_materials <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = sum/sum(sum)) %>%
   ungroup() %>%
-  left_join(distances_added_2 %>%
+  left_join(distances_added %>%
               select(filename, distance_to_bay)) %>%
   #filter(proportion > 0 & !is.nan(proportion)) %>%
   filter(!is.na(material)) %>% #the NAs are just descriptions of the other column so can be ignored. 
@@ -571,7 +599,7 @@ trash_materials_vol <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = sum_vol/sum(sum_vol)) %>%
   ungroup() %>%
-  left_join(distances_added_2 %>%
+  left_join(distances_added %>%
               select(filename, distance_to_bay)) %>%
   #filter(proportion > 0 & !is.nan(proportion)) %>%
   filter(!is.na(material)) %>% #Nas are just descriptions of the other category and can be ignored. 
@@ -591,7 +619,7 @@ trash_materials_vol_2 <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = sum_vol/sum(sum_vol)) %>%
   ungroup() %>%
-  left_join(distances_added_2 %>%
+  left_join(distances_added %>%
               select(filename, distance_to_bay)) %>%
   #filter(proportion > 0 & !is.nan(proportion)) %>%
   filter(!is.na(material)) %>% #Nas are just descriptions of the other category and can be ignored. 
