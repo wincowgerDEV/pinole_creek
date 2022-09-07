@@ -27,9 +27,76 @@ BootMean <- function(data) {
   return(mean)
 }
 
+### THEME GRAY ####
 
-#Working directory ----
-setwd("G:/My Drive/GrayLab/Projects/Plastics/ActiveProjects/PinoleCreek")
+theme_gray_etal<- function(base_size = 12, bgcolor = NA) {
+    half_line <- base_size/2
+    theme(
+        line = element_line(colour = "black", size = rel(1.5), 
+                            linetype = 1, lineend = "butt"), 
+        rect = element_rect(fill = NA, colour = "black",
+                            size = 0.5, linetype = 1),
+        text = element_text(face = "plain",
+                            colour = "black", size = base_size,
+                            lineheight = 0.9,  hjust = 0.5,
+                            vjust = 0.5, angle = 0, 
+                            margin = margin(), debug = FALSE), 
+        
+        axis.line = element_blank(), 
+        axis.text = element_text(size = rel(1.5), colour = "grey10"),
+        axis.text.x = element_text(margin = margin(t = half_line/2), 
+                                   vjust = 1), 
+        axis.text.y = element_text(margin = margin(r = half_line/2),
+                                   hjust = 1),
+        axis.ticks = element_line(colour = "black", size=1), 
+        axis.ticks.length = unit(half_line*0.75, "pt"), 
+        axis.title = element_text(size = rel(1.5), colour = "black"),
+        axis.title.x = element_text(margin = margin(t = half_line*5,
+                                                    b = half_line)),
+        axis.title.y = element_text(angle = 90, 
+                                    margin = margin(r = half_line*5,
+                                                    l = half_line)),
+        
+        legend.background = element_rect(colour = NA), 
+        legend.key = element_rect(colour = NA),
+        legend.key.size = unit(2, "lines"), 
+        legend.key.height = NULL,
+        legend.key.width = NULL, 
+        legend.text = element_text(size = rel(1)),
+        legend.text.align = NULL,
+        legend.title = element_text(size = rel(1)), 
+        legend.title.align = NULL, 
+        legend.position = "right", 
+        legend.direction = NULL,
+        legend.justification = "center", 
+        legend.box = NULL, 
+        
+        panel.background = element_rect(fill=bgcolor,colour = "black", size = 2), 
+        panel.grid.major = element_blank(), 
+        panel.grid.minor = element_blank(), 
+        panel.spacing = unit(half_line, "pt"), panel.margin.x = NULL, 
+        panel.spacing.y = NULL, panel.ontop = FALSE, 
+        
+        #Facet Labels
+        strip.background = element_blank(),
+        strip.text = element_text(face="bold",colour = "black", size = rel(1.5)),
+        strip.text.x = element_text(margin = margin(t = half_line,
+                                                    b = half_line)), 
+        strip.text.y = element_text(angle = 0, 
+                                    margin = margin(l = half_line, 
+                                                    r = half_line)),
+        strip.switch.pad.grid = unit(5, "lines"),
+        strip.switch.pad.wrap = unit(5, "lines"), 
+        
+        
+        plot.background = element_rect(colour = rgb(119,136,153, max = 255)), 
+        plot.title = element_text(size = rel(1.5), 
+                                  margin = margin(b = half_line * 1.2)),
+        plot.margin = margin(4*half_line, 4*half_line, 4*half_line, 4*half_line),
+        complete = TRUE)
+}
+
+
 
 #Data Cleanup ----
 #MDT <- read.csv("mdt-data.csv")
@@ -256,6 +323,8 @@ distances_added <- read.csv("distances_to_bay_added.csv") %>%
   
 write.csv(distances_added, "distances_added_count_vol.csv")
 
+options(scipen = 999)
+
 distances_added %>%
   ggplot(aes(x = sum_l_per_m, y = sum_per_m, shape = upstream_of_city, color = log10(multiple))) + 
   geom_point(size = 5) + 
@@ -294,13 +363,13 @@ distances_added %>%
   select(distance_to_bay, multiple, sum_per_m, sum_l_per_m) %>%
   rename(`count per m` = sum_per_m, `liters per m` = sum_l_per_m, multiply = multiple) %>%
   pivot_longer(cols = -distance_to_bay) %>%
-ggplot() + 
-  geom_point(aes(x = distance_to_bay, y = value, color = name), alpha = 0.5, size = 3) + 
-  scale_y_log10() + 
-  geom_vline(xintercept = 6441 + 171) + 
-  theme_gray_etal() + 
-  labs(x = "Distance to Bay (m)", y = "Value") + 
-  facet_wrap(. ~ name)
+    ggplot() + 
+      geom_point(aes(x = distance_to_bay, y = value, color = name), alpha = 0.5, size = 3) + 
+      scale_y_log10() + 
+      geom_vline(xintercept = 6441 + 171) + 
+      theme_gray_etal() + 
+      labs(x = "Distance to Bay (m)", y = "Value") + 
+      facet_wrap(. ~ name)
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) + 
@@ -309,25 +378,27 @@ ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) +
     scale_y_log10() + 
     geom_vline(xintercept = 6441 + 171) + 
     theme_gray_etal() + 
-    labs(x = "Distance to Bay (m)", y = "Count per m")
+    labs(x = "Distance to Bay (m)", y = "Multiple")
 
-ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m)) + 
+ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m*1000)) + 
   geom_point(size = 3) + 
   geom_line() + 
+  #geom_smooth(method = "lm") +
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
   theme_gray_etal() + 
-  labs(x = "Distance to Bay (m)", y = "Count per m")
+  labs(x = "Distance to Bay (m)", y = "Count per km")
 
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
-ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m)) + 
+ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m*1000)) + 
   geom_point(size = 3) + 
   geom_line() + 
+  #geom_smooth(method = "lm") +
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
   theme_gray_etal() + 
-  labs(x = "Distance to Bay (m)", y = "Volume (m3) per m")
+  labs(x = "Distance to Bay (m)", y = "Volume m^3 per km")
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 #stations pre rain
@@ -388,14 +459,14 @@ ggplot(boot_rain, aes(x = mean_vol_m, y = pre_rain)) +
 #estimate total amount of litter in the stream
 
 ggplot(distances_added) + 
-    stat_ecdf(aes(x = sum_per_m)) + 
+    stat_ecdf(aes(x = sum_per_m*1000), size = 2) + 
     theme_gray_etal() + 
-    labs(x = "Count per Meter", y = "Proportion Smaller")
+    labs(x = "Count per km", y = "Proportion Smaller")
 
 ggplot(distances_added) + 
-    stat_ecdf(aes(x = sum_m3_per_m * 1000)) + 
+    stat_ecdf(aes(x = sum_m3_per_m * 1000), size = 2) + 
     theme_gray_etal() + 
-    labs(x = "Liters per Meter", y = "Proportion Smaller")
+    labs(x = "Volume m^3 per km", y = "Proportion Smaller")
 
 hist(distances_added$sum_per_m)
 hist(BootMean(distances_added$sum_per_m))
