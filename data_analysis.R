@@ -381,21 +381,15 @@ ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) +
     labs(x = "Distance to Bay (m)", y = "Multiple")
 
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m*1000)) + 
-=======
+
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m)) + 
->>>>>>> parent of a374cb9 (add new multi analysis)
   geom_point(size = 3) + 
   geom_line() + 
   #geom_smooth(method = "lm") +
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
-<<<<<<< HEAD
   theme_gray_etal() + 
   labs(x = "Distance to Bay (m)", y = "Count per km")
-
-=======
-  theme_gray_etal()
->>>>>>> parent of a374cb9 (add new multi analysis)
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m*1000)) + 
@@ -404,12 +398,9 @@ ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m*1000)) +
   #geom_smooth(method = "lm") +
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
-<<<<<<< HEAD
   theme_gray_etal() + 
   labs(x = "Distance to Bay (m)", y = "Volume m^3 per km")
-=======
-  theme_gray_etal()
->>>>>>> parent of a374cb9 (add new multi analysis)
+
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 #stations pre rain
@@ -468,7 +459,7 @@ ggplot(boot_rain, aes(x = mean_vol_m, y = pre_rain)) +
 
 
 #estimate total amount of litter in the stream
-<<<<<<< HEAD
+
 
 ggplot(distances_added) + 
     stat_ecdf(aes(x = sum_per_m*1000), size = 2) + 
@@ -481,8 +472,7 @@ ggplot(distances_added) +
     labs(x = "Volume m^3 per km", y = "Proportion Smaller")
 
 hist(distances_added$sum_per_m)
-=======
->>>>>>> parent of a374cb9 (add new multi analysis)
+
 hist(BootMean(distances_added$sum_per_m))
 total_count <- mean(distances_added$sum_per_m) * 17732.882
 count_range <- quantile(BootMean(distances_added$sum_per_m), c(0.025, 0.975)) * 17732.882
