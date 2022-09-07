@@ -316,7 +316,6 @@ counts_and_volumes <- read.csv("counts_and_volumes.csv")
 distances_added <- read.csv("distances_to_bay_added.csv") %>%
   inner_join(counts_and_volumes) %>%
   mutate(distance_to_bay = 17732.882 - dist) %>%
-  mutate(multiple = OpenSpecy::make_rel(sum_per_m, na.rm = T) * OpenSpecy::make_rel(sum_m3_per_m, na.rm = T)) %>%
   mutate(censored_sum = sum == 0) %>%
   mutate(censored_volume = sum_m3 == 0) %>%
   mutate(upstream_of_city = distance_to_bay > 6441 + 171)
@@ -372,6 +371,7 @@ distances_added %>%
       facet_wrap(. ~ name)
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
+<<<<<<< HEAD
 ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) + 
     geom_point(size = 3) + 
     geom_line() + 
@@ -381,14 +381,21 @@ ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) +
     labs(x = "Distance to Bay (m)", y = "Multiple")
 
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m*1000)) + 
+=======
+ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m)) + 
+>>>>>>> parent of a374cb9 (add new multi analysis)
   geom_point(size = 3) + 
   geom_line() + 
   #geom_smooth(method = "lm") +
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
+<<<<<<< HEAD
   theme_gray_etal() + 
   labs(x = "Distance to Bay (m)", y = "Count per km")
 
+=======
+  theme_gray_etal()
+>>>>>>> parent of a374cb9 (add new multi analysis)
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m*1000)) + 
@@ -397,8 +404,12 @@ ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m*1000)) +
   #geom_smooth(method = "lm") +
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
+<<<<<<< HEAD
   theme_gray_etal() + 
   labs(x = "Distance to Bay (m)", y = "Volume m^3 per km")
+=======
+  theme_gray_etal()
+>>>>>>> parent of a374cb9 (add new multi analysis)
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
 #stations pre rain
@@ -457,6 +468,7 @@ ggplot(boot_rain, aes(x = mean_vol_m, y = pre_rain)) +
 
 
 #estimate total amount of litter in the stream
+<<<<<<< HEAD
 
 ggplot(distances_added) + 
     stat_ecdf(aes(x = sum_per_m*1000), size = 2) + 
@@ -469,9 +481,9 @@ ggplot(distances_added) +
     labs(x = "Volume m^3 per km", y = "Proportion Smaller")
 
 hist(distances_added$sum_per_m)
+=======
+>>>>>>> parent of a374cb9 (add new multi analysis)
 hist(BootMean(distances_added$sum_per_m))
-mean(distances_added$sum_per_m)
-quantile(BootMean(distances_added$sum_per_m), c(0.025, 0.975)) 
 total_count <- mean(distances_added$sum_per_m) * 17732.882
 count_range <- quantile(BootMean(distances_added$sum_per_m), c(0.025, 0.975)) * 17732.882
 quantile(BootMean(distances_added$sum), c(0.025, 0.975)) 
@@ -480,8 +492,6 @@ mean(distances_added$sum)#2X above average compared to southern California in 20
 hist(BootMean(distances_added$sum_m3_per_m))
 total_volume <- mean(distances_added$sum_m3_per_m) * 17732.882
 volume_range <- quantile(BootMean(distances_added$sum_m3_per_m), c(0.025, 0.975)) * 17732.882
-total_volume/17732.882
-volume_range/17732.882
 #average commercial dump truck is 10 cubic meters. So anywhere from 1-6 dump trucks. 
 #people create 5 pounds of trash per day. 
 #https://www.epa.gov/sites/default/files/2016-04/documents/volume_to_weight_conversion_factors_memorandum_04192016_508fnl.pdf
@@ -527,7 +537,7 @@ trash_items <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = count/sum(count)) %>%
   ungroup() %>%
-  left_join(distances_added)
+  left_join(distances_added_2)
 
 ggplot(trash_items, aes(y=proportion, x=distance_to_bay)) +
   geom_point() + 
@@ -573,7 +583,7 @@ trash_items %>%
     facet_grid(rows = vars(item)) + 
     geom_vline(xintercept = 6441 + 171) + 
     scale_y_log10(limits = c(0.1,100)) + 
-    theme_gray_etal(base_size = 10) + 
+    theme_gray_etal(base_size = 11) + 
     labs(x = "Distance to Bay (m)", y = "Percent") 
 #Might need to remove the sites that had no trash because they will just down weight all the values. 
 trash_list <- expand.grid(item = unique(clean_joined_file_2$item),
@@ -613,7 +623,7 @@ trash_materials <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = sum/sum(sum)) %>%
   ungroup() %>%
-  left_join(distances_added %>%
+  left_join(distances_added_2 %>%
               select(filename, distance_to_bay)) %>%
   #filter(proportion > 0 & !is.nan(proportion)) %>%
   filter(!is.na(material)) %>% #the NAs are just descriptions of the other column so can be ignored. 
@@ -670,7 +680,7 @@ trash_materials_vol <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = sum_vol/sum(sum_vol)) %>%
   ungroup() %>%
-  left_join(distances_added %>%
+  left_join(distances_added_2 %>%
               select(filename, distance_to_bay)) %>%
   #filter(proportion > 0 & !is.nan(proportion)) %>%
   filter(!is.na(material)) %>% #Nas are just descriptions of the other category and can be ignored. 
@@ -690,7 +700,7 @@ trash_materials_vol_2 <- clean_joined_file_2 %>%
   group_by(filename) %>%
   mutate(proportion = sum_vol/sum(sum_vol)) %>%
   ungroup() %>%
-  left_join(distances_added %>%
+  left_join(distances_added_2 %>%
               select(filename, distance_to_bay)) %>%
   #filter(proportion > 0 & !is.nan(proportion)) %>%
   filter(!is.na(material)) %>% #Nas are just descriptions of the other category and can be ignored. 
