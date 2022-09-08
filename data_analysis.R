@@ -371,7 +371,6 @@ distances_added %>%
       facet_wrap(. ~ name)
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
-<<<<<<< HEAD
 ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) + 
     geom_point(size = 3) + 
     geom_line() + 
@@ -381,8 +380,6 @@ ggplot(distances_added, aes(x = distance_to_bay, y = multiple)) +
     labs(x = "Distance to Bay (m)", y = "Multiple")
 
 ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m*1000)) + 
-
-ggplot(distances_added, aes(x = distance_to_bay, y = sum_per_m)) + 
   geom_point(size = 3) + 
   geom_line() + 
   #geom_smooth(method = "lm") +
@@ -575,6 +572,7 @@ trash_items %>%
     scale_y_log10(limits = c(0.1,100)) + 
     theme_gray_etal(base_size = 11) + 
     labs(x = "Distance to Bay (m)", y = "Percent") 
+
 #Might need to remove the sites that had no trash because they will just down weight all the values. 
 trash_list <- expand.grid(item = unique(clean_joined_file_2$item),
                           filename = unique(clean_joined_file_2$filename))
@@ -698,7 +696,7 @@ trash_materials_vol_2 <- clean_joined_file_2 %>%
   mutate(name = "volume") %>%
   bind_rows(trash_materials %>%
               mutate(name = "count")) %>%
-  mutate(proportion = proportion * 100)
+  mutate(proportion = proportion)
 
 
 ggplot(trash_materials_vol_2, aes(x=distance_to_bay, y=proportion, color=material, shape = name)) + 
@@ -730,11 +728,9 @@ trash_materials_vol_bootstrap <- trash_materials_vol %>%
               mutate(name = "count"))
 
 ggplot(trash_materials_vol_bootstrap %>%
-         arrange(mean) %>%    # First sort by val. This sort the dataframe but NOT the factor levels
-         #mutate(material =factor(material, levels=material)) %>%
-         filter(mean > 0.01), aes(x = mean, y = material)) +  # This trick update the factor levels) +
+         arrange(mean), aes(x = mean/100, y = material)) +  # This trick update the factor levels) +
   geom_point() + 
-  geom_errorbar(aes(xmin = lower, xmax = upper)) +
+  geom_errorbar(aes(xmin = lower/100, xmax = upper/100)) +
   theme_gray_etal(base_size = 12) +
   labs(x = "Mean Proportion", y = "") + 
   facet_wrap(.~name)
