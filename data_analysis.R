@@ -300,14 +300,11 @@ counts_and_volumes <- inner_join(site_counts, site_volumes) %>%
 
 write.csv(counts_and_volumes, "counts_and_volumes.csv")
 
-
 distance_to_bay <- clean_joined_file_2 %>%
   distinct(filename, start_latitude, start_longitude, end_latitude, end_longitude)
 
 write.csv(distance_to_bay, "distance_to_bay.csv")
 #site 72 appears to be off of the mainstem based on the start point. endpoint is on though, perhaps a typo? 
-
-
 
 counts_and_volumes <- read.csv("counts_and_volumes.csv")
 #total length of mainstem is 17732.882 meters
@@ -396,7 +393,7 @@ ggplot(distances_added, aes(x = distance_to_bay, y = sum_m3_per_m*1000)) +
   scale_y_log10() + 
   geom_vline(xintercept = 6441 + 171) + 
   theme_gray_etal() + 
-  labs(x = "Distance to Bay (m)", y = "Volume m^3 per km")
+  labs(x = "Distance to Bay (m)", y = bquote("Volume "~m^3~"per km"))
 
 #interesting dip immediately above the town where perhaps there isn't a lot of input from storm drains and there isn't dumping. 
 
@@ -456,17 +453,67 @@ ggplot(boot_rain, aes(x = mean_vol_m, y = pre_rain)) +
 
 
 #estimate total amount of litter in the stream
+library(ggdist)
 
-
-ggplot(distances_added) + 
-    stat_ecdf(aes(x = sum_per_m*1000), size = 2) + 
+ggplot(distances_added, aes(x = sum_per_m*1000, y = "Count")) + 
+ggdist::stat_halfeye(
+    ## custom bandwidth
+    adjust = .5, 
+    ## adjust height
+    width = .6, 
+    ## move geom to the right
+    justification = -.2, 
+    ## remove slab interval
+    .width = 0, 
+    point_colour = NA
+) + 
+    geom_boxplot(
+        width = .12, 
+        ## remove outliers
+        outlier.color = NA ## `outlier.shape = NA` works as well
+    ) +
+    ## add dot plots from {ggdist} package
+    geom_point(
+        size = 1.3,
+        alpha = .3,
+        position = position_jitter(
+            seed = 1, width = .1
+        )
+    ) + 
+    ## remove white space on the left
+    coord_cartesian() +
     theme_gray_etal() + 
-    labs(x = "Count per km", y = "Proportion Smaller")
+    labs(x = "Count per km", y = "")
 
-ggplot(distances_added) + 
-    stat_ecdf(aes(x = sum_m3_per_m * 1000), size = 2) + 
+ggplot(distances_added, aes(x = sum_m3_per_m * 1000, y = "Volume")) + 
+    ggdist::stat_halfeye(
+        ## custom bandwidth
+        adjust = .5, 
+        ## adjust height
+        width = .6, 
+        ## move geom to the right
+        justification = -.2, 
+        ## remove slab interval
+        .width = 0, 
+        point_colour = NA
+    ) + 
+    geom_boxplot(
+        width = .12, 
+        ## remove outliers
+        outlier.color = NA ## `outlier.shape = NA` works as well
+    ) +
+    ## add dot plots from {ggdist} package
+    geom_point(
+        size = 1.3,
+        alpha = .3,
+        position = position_jitter(
+            seed = 1, width = .1
+        )
+    ) + 
+    ## remove white space on the left
+    coord_cartesian() +
     theme_gray_etal() + 
-    labs(x = "Volume m^3 per km", y = "Proportion Smaller")
+    labs(x = bquote("Volume "~m^3~"per km"), y = "Proportion Smaller")
 
 hist(distances_added$sum_per_m)
 
@@ -565,6 +612,7 @@ trash_items %>%
                               "Cups",
                               "Plastic Bottles",
                               "Foam Plate")) %>%
+    mutate(item = gsub("\\*", "", item)) %>%
     ggplot(aes(y=proportion*100, x=distance_to_bay)) +
     geom_point() + 
     facet_grid(rows = vars(item)) + 
@@ -572,7 +620,7 @@ trash_items %>%
     scale_y_log10(limits = c(0.1,100)) + 
     theme_gray_etal(base_size = 11) + 
     labs(x = "Distance to Bay (m)", y = "Percent") 
-
+#gsub("\\*", "", "Bag Pieces*")
 #Might need to remove the sites that had no trash because they will just down weight all the values. 
 trash_list <- expand.grid(item = unique(clean_joined_file_2$item),
                           filename = unique(clean_joined_file_2$filename))
@@ -595,12 +643,13 @@ trash_items_bootstrap <- trash_items %>%
 
 ggplot(trash_items_bootstrap %>%
          arrange(mean) %>%    # First sort by val. This sort the dataframe but NOT the factor levels
+         mutate(item = gsub(" \\(describe\\)", "", gsub("\\*", "", item))) %>%
          mutate(item=factor(item, levels=item)) %>%
-         filter(mean > 0.01), aes(x = mean, y = item)) +  # This trick update the factor levels) +
+         filter(mean > 0.01), aes(x = mean*100, y = item)) +  # This trick update the factor levels) +
   geom_point() + 
-  geom_errorbar(aes(xmin = lower, xmax = upper)) +
+  geom_errorbar(aes(xmin = lower*100, xmax = upper*100)) +
   theme_gray_etal(base_size = 8) +
-  labs(x = "Mean Proportion", y = "")
+  labs(x = "Mean Percent", y = "")
 
 
 trash_materials <- clean_joined_file_2 %>%
@@ -727,12 +776,14 @@ trash_materials_vol_bootstrap <- trash_materials_vol %>%
   bind_rows(trash_materials_bootstrap %>%
               mutate(name = "count"))
 
-ggplot(trash_materials_vol_bootstrap %>%
-         arrange(mean), aes(x = mean/100, y = material)) +  # This trick update the factor levels) +
+trash_materials_vol_bootstrap %>%
+  arrange(name, mean) %>%
+  #mutate(material =as.factor(material, levels=material)) %>%
+  ggplot(aes(x = mean, y = material)) +  # This trick update the factor levels) +
   geom_point() + 
-  geom_errorbar(aes(xmin = lower/100, xmax = upper/100)) +
+  geom_errorbar(aes(xmin = lower, xmax = upper)) +
   theme_gray_etal(base_size = 12) +
-  labs(x = "Mean Proportion", y = "") + 
+  labs(x = "Mean Percentage", y = "") + 
   facet_wrap(.~name)
 
 #interesting downstream increase in prevalence of biodegradable and biohazard classes. 
