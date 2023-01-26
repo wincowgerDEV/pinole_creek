@@ -482,10 +482,11 @@ ggdist::stat_halfeye(
     ) + 
     ## remove white space on the left
     coord_cartesian() +
+    scale_x_log10() +
     theme_gray_etal() + 
     labs(x = "Count per km", y = "")
 
-ggplot(distances_added, aes(x = sum_m3_per_m * 1000, y = "Volume")) + 
+ggplot(distances_added %>% filter(sum_m3_per_m != 0), aes(x = sum_m3_per_m * 1000, y = "Volume")) + 
     ggdist::stat_halfeye(
         ## custom bandwidth
         adjust = .5, 
@@ -513,6 +514,7 @@ ggplot(distances_added, aes(x = sum_m3_per_m * 1000, y = "Volume")) +
     ## remove white space on the left
     coord_cartesian() +
     theme_gray_etal() + 
+    scale_x_log10() +
     labs(x = bquote("Volume "~m^3~"per km"), y = "Proportion Smaller")
 
 hist(distances_added$sum_per_m)
@@ -610,15 +612,16 @@ trash_items %>%
                               "Foam Food Containers",
                               "Foam Cups",
                               "Cups",
+                              "Chip Bags",
                               "Plastic Bottles",
                               "Foam Plate")) %>%
     mutate(item = gsub("\\*", "", item)) %>%
     ggplot(aes(y=proportion*100, x=distance_to_bay)) +
-    geom_point() + 
+    geom_point(size = 2, alpha = 0.5) + 
     facet_grid(rows = vars(item)) + 
     geom_vline(xintercept = 6441 + 171) + 
     scale_y_log10(limits = c(0.1,100)) + 
-    theme_gray_etal(base_size = 11) + 
+    theme_gray_etal(base_size = 9) + 
     labs(x = "Distance to Bay (m)", y = "Percent") 
 #gsub("\\*", "", "Bag Pieces*")
 #Might need to remove the sites that had no trash because they will just down weight all the values. 
